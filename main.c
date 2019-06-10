@@ -20,26 +20,6 @@ static int opt_stretch = 0;
 static int opt_delay = 0;
 static int opt_enlarge = 0;
 
-void setup_console(int t)
-{
-	struct termios our_termios;
-	static struct termios old_termios;
-
-	if(t)
-	{
-		printf("setup console\n");
-		tcgetattr(0, &old_termios);
-		memcpy(&our_termios, &old_termios, sizeof(struct termios));
-		our_termios.c_lflag &= !(ECHO | ICANON);
-		tcsetattr(0, TCSANOW, &our_termios);
-	}
-	else
-	{
-      //printf("restore console\n");
-		tcsetattr(0, TCSANOW, &old_termios);
-	}
-}
-
 static inline void do_rotate(struct image *i, int rot)
 {
 	if(rot)
@@ -289,7 +269,6 @@ void help(char *name)
 
 void sighandler(int s)
 {
-	setup_console(0);
 	_exit(128 + s);
 }
 
@@ -352,8 +331,6 @@ int main(int argc, char **argv)
 	signal(SIGTERM, sighandler);
 	signal(SIGABRT, sighandler);
 
-	setup_console(1);
-
 	i = optind;
 	while(argv[i])
 	{
@@ -364,8 +341,6 @@ int main(int argc, char **argv)
 		if(i < optind)
 			i = optind;
 	}
-
-	setup_console(0);
 
 	return 0;
 }
