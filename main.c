@@ -17,7 +17,6 @@
 
 static int opt_clear = 1;
 static int opt_alpha = 0;
-static int opt_hide_cursor = 1;
 static int opt_stretch = 0;
 static int opt_delay = 0;
 static int opt_enlarge = 0;
@@ -293,7 +292,6 @@ void help(char *name)
 		   "  -h, --help          Show this help\n"
 		   "  -a, --alpha         Use the alpha channel (if applicable)\n"
 		   "  -c, --dontclear     Do not clear the screen before and after displaying the image\n"
-		   "  -u, --donthide      Do not hide the cursor before and after displaying the image\n"
 		   "  -f, --stretch       Strech (using a simple resizing routine) the image to fit onto screen if necessary\n"
 		   "  -k, --colorstretch  Strech (using a 'color average' resizing routine) the image to fit onto screen if necessary\n"
 		   "  -e, --enlarge       Enlarge the image to fit the whole screen if necessary\n"
@@ -305,11 +303,6 @@ void help(char *name)
 
 void sighandler(int s)
 {
-	if(opt_hide_cursor)
-	{
-		printf("\033[?25h");
-		fflush(stdout);
-	}
 	setup_console(0);
 	_exit(128 + s);
 }
@@ -321,7 +314,6 @@ int main(int argc, char **argv)
 		{"help",          no_argument,  0, 'h'},
 		{"noclear",       no_argument,  0, 'c'},
 		{"alpha",         no_argument,  0, 'a'},
-		{"unhide",        no_argument,  0, 'u'},
 		{"stretch",       no_argument,  0, 'f'},
 		{"colorstrech",   no_argument,  0, 'k'},
 		{"delay",         required_argument, 0, 's'},
@@ -337,7 +329,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	while((c = getopt_long_only(argc, argv, "hcaufks:e", long_options, NULL)) != EOF)
+	while((c = getopt_long_only(argc, argv, "hcafks:e", long_options, NULL)) != EOF)
 	{
 		switch(c)
 		{
@@ -349,9 +341,6 @@ int main(int argc, char **argv)
 				break;
 			case 's':
 				opt_delay = atoi(optarg);
-				break;
-			case 'u':
-				opt_hide_cursor = 0;
 				break;
 			case 'h':
 				help(argv[0]);
@@ -381,12 +370,6 @@ int main(int argc, char **argv)
 	signal(SIGTERM, sighandler);
 	signal(SIGABRT, sighandler);
 
-	if(opt_hide_cursor)
-	{
-		printf("\033[?25l");
-		fflush(stdout);
-	}
-
 	setup_console(1);
 
 	i = optind;
@@ -402,11 +385,6 @@ int main(int argc, char **argv)
 
 	setup_console(0);
 
-	if(opt_hide_cursor)
-	{
-		printf("\033[?25h");
-		fflush(stdout);
-	}
 	return 0;
 }
 
