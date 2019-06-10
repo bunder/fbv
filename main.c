@@ -21,7 +21,6 @@ static int opt_hide_cursor = 1;
 static int opt_stretch = 0;
 static int opt_delay = 0;
 static int opt_enlarge = 0;
-static int opt_ignore_aspect = 0;
 
 void setup_console(int t)
 {
@@ -73,24 +72,14 @@ static inline void do_rotate(struct image *i, int rot)
 }
 
 
-static inline void do_enlarge(struct image *i, int screen_width, int screen_height, int ignoreaspect)
+static inline void do_enlarge(struct image *i, int screen_width, int screen_height)
 {
-	if(((i->width > screen_width) || (i->height > screen_height)) && (!ignoreaspect))
+	if((i->width > screen_width) || (i->height > screen_height))
 		return;
 	if((i->width < screen_width) || (i->height < screen_height))
 	{
 		int xsize = i->width, ysize = i->height;
 		unsigned char * image, * alpha = NULL;
-
-		if(ignoreaspect)
-		{
-			if(i->width < screen_width)
-				xsize = screen_width;
-			if(i->height < screen_height)
-				ysize = screen_height;
-
-			goto have_sizes;
-		}
 
 		if((i->height * screen_width / i->width) <= screen_height)
 		{
@@ -126,32 +115,22 @@ have_sizes:
 }
 
 
-static inline void do_fit_to_screen(struct image *i, int screen_width, int screen_height, int ignoreaspect, int cal)
+static inline void do_fit_to_screen(struct image *i, int screen_width, int screen_height, int cal)
 {
 	if((i->width > screen_width) || (i->height > screen_height))
 	{
 		unsigned char * new_image, * new_alpha = NULL;
 		int nx_size = i->width, ny_size = i->height;
 
-		if(ignoreaspect)
+		if((i->height * screen_width / i->width) <= screen_height)
 		{
-			if(i->width > screen_width)
-				nx_size = screen_width;
-			if(i->height > screen_height)
-				ny_size = screen_height;
+			nx_size = screen_width;
+			ny_size = i->height * screen_width / i->width;
 		}
 		else
 		{
-			if((i->height * screen_width / i->width) <= screen_height)
-			{
-				nx_size = screen_width;
-				ny_size = i->height * screen_width / i->width;
-			}
-			else
-			{
-				nx_size = i->width * screen_height / i->height;
-				ny_size = screen_height;
-			}
+			nx_size = i->width * screen_height / i->height;
+			ny_size = screen_height;
 		}
 
 		if(cal)
@@ -190,7 +169,7 @@ int show_image(char *filename)
 	int delay = opt_delay;
 
 	int transform_stretch = opt_stretch, transform_enlarge = opt_enlarge;
-	int transform_cal = (opt_stretch == 2), transform_iaspect = opt_ignore_aspect;
+	int transform_cal = (opt_stretch == 2);
 	int transform_rotation = 0;
 
 	struct image i;
@@ -263,10 +242,10 @@ identified:
 		do_rotate(&i, transform_rotation);
 
 	if(transform_stretch)
-		do_fit_to_screen(&i, screen_width, screen_height, transform_iaspect, transform_cal);
+		do_fit_to_screen(&i, screen_width, screen_height, transform_cal);
 
 	if(transform_enlarge)
-		do_enlarge(&i, screen_width, screen_height, transform_iaspect);
+		do_enlarge(&i, screen_width, screen_height);
 
 	x_pan = y_pan = 0;
 	if(opt_clear)
@@ -318,7 +297,6 @@ void help(char *name)
 		   "  -f, --stretch       Strech (using a simple resizing routine) the image to fit onto screen if necessary\n"
 		   "  -k, --colorstretch  Strech (using a 'color average' resizing routine) the image to fit onto screen if necessary\n"
 		   "  -e, --enlarge       Enlarge the image to fit the whole screen if necessary\n"
-		   "  -r, --ignore-aspect Ignore the image aspect while resizing\n"
 		   "  -s <delay>, --delay <d>  Slideshow, 'delay' is the slideshow delay in tenths of seconds.\n\n"
 		   " Copyright (C) 2000 - 2004 Mateusz Golicz, Tomasz Sterna.\n"
 		   " Copyright (C) 2013 yanlin, godspeed1989@gitbub\n"
@@ -348,7 +326,6 @@ int main(int argc, char **argv)
 		{"colorstrech",   no_argument,  0, 'k'},
 		{"delay",         required_argument, 0, 's'},
 		{"enlarge",       no_argument,  0, 'e'},
-		{"ignore-aspect", no_argument,  0, 'r'},
 		{0, 0, 0, 0}
 	};
 	int c, i;
@@ -360,7 +337,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	while((c = getopt_long_only(argc, argv, "hcaufks:er", long_options, NULL)) != EOF)
+	while((c = getopt_long_only(argc, argv, "hcaufks:e", long_options, NULL)) != EOF)
 	{
 		switch(c)
 		{
@@ -387,9 +364,6 @@ int main(int argc, char **argv)
 				break;
 			case 'e':
 				opt_enlarge = 1;
-				break;
-			case 'r':
-				opt_ignore_aspect = 1;
 				break;
 		}
 	}
