@@ -15,7 +15,6 @@
 
 #define PAN_STEPPING 20
 
-static int opt_clear = 1;
 static int opt_alpha = 0;
 static int opt_stretch = 0;
 static int opt_delay = 0;
@@ -247,12 +246,6 @@ identified:
 		do_enlarge(&i, screen_width, screen_height);
 
 	x_pan = y_pan = 0;
-	if(opt_clear)
-	{
-		printf("\033[H\033[J");
-		fflush(stdout);
-	}
-
 	if(i.width < screen_width)
 		x_offs = (screen_width - i.width) / 2;
 	else
@@ -267,12 +260,6 @@ identified:
 		goto error;
 
 	sleep(delay);
-
-	if(opt_clear)
-	{
-		printf("\033[H\033[J");
-		fflush(stdout);
-	}
 
 error:
 	free(image);
@@ -291,7 +278,6 @@ void help(char *name)
 		   "Available options:\n"
 		   "  -h, --help          Show this help\n"
 		   "  -a, --alpha         Use the alpha channel (if applicable)\n"
-		   "  -c, --dontclear     Do not clear the screen before and after displaying the image\n"
 		   "  -f, --stretch       Strech (using a simple resizing routine) the image to fit onto screen if necessary\n"
 		   "  -k, --colorstretch  Strech (using a 'color average' resizing routine) the image to fit onto screen if necessary\n"
 		   "  -e, --enlarge       Enlarge the image to fit the whole screen if necessary\n"
@@ -312,7 +298,6 @@ int main(int argc, char **argv)
 	static struct option long_options[] =
 	{
 		{"help",          no_argument,  0, 'h'},
-		{"noclear",       no_argument,  0, 'c'},
 		{"alpha",         no_argument,  0, 'a'},
 		{"stretch",       no_argument,  0, 'f'},
 		{"colorstrech",   no_argument,  0, 'k'},
@@ -335,9 +320,6 @@ int main(int argc, char **argv)
 		{
 			case 'a':
 				opt_alpha = 1;
-				break;
-			case 'c':
-				opt_clear = 0;
 				break;
 			case 's':
 				opt_delay = atoi(optarg);
@@ -387,4 +369,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-
