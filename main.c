@@ -185,10 +185,10 @@ int show_image(char *filename)
 	unsigned char * image = NULL;
 	unsigned char * alpha = NULL;
 
-	int c, ret;
+	int ret = 1;
 	int x_size, y_size, screen_width, screen_height;
-	int x_pan, y_pan, x_offs, y_offs, refresh = 1;
-	int delay = opt_delay, retransform = 1;
+	int x_pan, y_pan, x_offs, y_offs;
+	int delay = opt_delay;
 
 	int transform_stretch = opt_stretch, transform_enlarge = opt_enlarge;
 	int transform_cal = (opt_stretch == 2), transform_iaspect = opt_ignore_aspect;
@@ -248,156 +248,51 @@ identified:
 	if(getCurrentRes(&screen_width, &screen_height))
 		goto error;
 	i.do_free = 0;
-	while(1)
+
+	if(i.do_free)
 	{
-		if(retransform)
-		{
-			if(i.do_free)
-			{
-				free(i.rgb);
-				free(i.alpha);
-			}
-			i.width = x_size;
-			i.height = y_size;
-			i.rgb = image;
-			i.alpha = alpha;
-			i.do_free = 0;
+		free(i.rgb);
+		free(i.alpha);
+	}
+	i.width = x_size;
+	i.height = y_size;
+	i.rgb = image;
+	i.alpha = alpha;
+	i.do_free = 0;
 
-			if(transform_rotation)
-				do_rotate(&i, transform_rotation);
+	if(transform_rotation)
+		do_rotate(&i, transform_rotation);
 
-			if(transform_stretch)
-				do_fit_to_screen(&i, screen_width, screen_height, transform_iaspect, transform_cal);
+	if(transform_stretch)
+		do_fit_to_screen(&i, screen_width, screen_height, transform_iaspect, transform_cal);
 
-			if(transform_enlarge)
-				do_enlarge(&i, screen_width, screen_height, transform_iaspect);
+	if(transform_enlarge)
+		do_enlarge(&i, screen_width, screen_height, transform_iaspect);
 
-			x_pan = y_pan = 0;
-			refresh = 1; retransform = 0;
-			if(opt_clear)
-			{
-				printf("\033[H\033[J");
-				fflush(stdout);
-			}
-			if(opt_image_info)
-				printf("fbv - The Framebuffer Viewer\n%s\n%d x %d\n", filename, x_size, y_size);
-		}
-		if(refresh)
-		{
-			if(i.width < screen_width)
-				x_offs = (screen_width - i.width) / 2;
-			else
-				x_offs = 0;
+	x_pan = y_pan = 0;
+	if(opt_clear)
+	{
+		printf("\033[H\033[J");
+		fflush(stdout);
+	}
+	if(opt_image_info)
+		printf("fbv - The Framebuffer Viewer\n%s\n%d x %d\n", filename, x_size, y_size);
 
-			if(i.height < screen_height)
-				y_offs = (screen_height - i.height) / 2;
-			else
-				y_offs = 0;
+	if(i.width < screen_width)
+		x_offs = (screen_width - i.width) / 2;
+	else
+		x_offs = 0;
 
-			if(fb_display(i.rgb, i.alpha, i.width, i.height, x_pan, y_pan, x_offs, y_offs))
-				goto error;
-			refresh = 0;
-		}
-		if(delay)
-		{
-			struct timeval tv;
-			fd_set fds;
-			tv.tv_sec = delay / 10;
-			tv.tv_usec = (delay % 10) * 100000;
-			FD_ZERO(&fds);
-			FD_SET(0, &fds);
+	if(i.height < screen_height)
+		y_offs = (screen_height - i.height) / 2;
+	else
+		y_offs = 0;
 
-			if(select(1, &fds, NULL, NULL, &tv) <= 0)
-			{
-				ret = 1;
-				break;
-			}
-			delay = 0;
-		}
+	if(fb_display(i.rgb, i.alpha, i.width, i.height, x_pan, y_pan, x_offs, y_offs))
+		goto error;
 
-		c = getchar();
-		switch(c)
-		{
-			case EOF:
-			case 'q':
-				ret = 0;
-				goto done;
-			case ' ': case 10: case 13:
-				goto done;
-			case '>': case '.':
-				ret = 1;
-				goto done;
-			case '<': case ',':
-				ret = -1;
-				goto done;
-			case 'r':
-				refresh = 1;
-				break;
-			case 'a': case 'D':
-				if(x_pan == 0) break;
-				x_pan -= i.width / PAN_STEPPING;
-				if(x_pan < 0) x_pan = 0;
-				refresh = 1;
-				break;
-			case 'd': case 'C':
-				if(x_offs) break;
-				if(x_pan >= (i.width - screen_width)) break;
-				x_pan += i.width / PAN_STEPPING;
-				if(x_pan > (i.width - screen_width)) x_pan = i.width - screen_width;
-				refresh = 1;
-				break;
-			case 'w': case 'A':
-				if(y_pan == 0) break;
-				y_pan -= i.height / PAN_STEPPING;
-				if(y_pan < 0) y_pan = 0;
-				refresh = 1;
-				break;
-			case 'x': case 'B':
-				if(y_offs) break;
-				if(y_pan >= (i.height - screen_height)) break;
-				y_pan += i.height / PAN_STEPPING;
-				if(y_pan > (i.height - screen_height)) y_pan = i.height - screen_height;
-				refresh = 1;
-				break;
-			case 'f':
-				transform_stretch = !transform_stretch;
-				retransform = 1;
-				break;
-			case 'e':
-				transform_enlarge = !transform_enlarge;
-				retransform = 1;
-				break;
-			case 'k':
-				transform_cal = !transform_cal;
-				retransform = 1;
-				break;
-			case 'i':
-				transform_iaspect = !transform_iaspect;
-				retransform = 1;
-				break;
-			case 'p':
-				transform_cal = 0;
-				transform_iaspect = 0;
-				transform_enlarge = 0;
-				transform_stretch = 0;
-				retransform = 1;
-				break;
-			case 'n':
-				transform_rotation -= 1;
-				if(transform_rotation < 0)
-					transform_rotation += 4;
-				retransform = 1;
-				break;
-			case 'm':
-				transform_rotation += 1;
-				if(transform_rotation > 3)
-					transform_rotation -= 4;
-				retransform = 1;
-				break;
-		}
-	}// while(1)
+	sleep(delay);
 
-done:
 	if(opt_clear)
 	{
 		printf("\033[H\033[J");
@@ -429,20 +324,9 @@ void help(char *name)
 		   "  -e, --enlarge       Enlarge the image to fit the whole screen if necessary\n"
 		   "  -r, --ignore-aspect Ignore the image aspect while resizing\n"
 		   "  -s <delay>, --delay <d>  Slideshow, 'delay' is the slideshow delay in tenths of seconds.\n\n"
-		   "Input keys:\n"
-		   " r          : Redraw the image\n"
-		   " < or ,     : Previous image\n"
-		   " > or .     : Next image\n"
-		   " a, d, w, x : Pan the image\n"
-		   " f          : Toggle resizing on/off\n"
-		   " k          : Toggle resizing quality\n"
-		   " e          : Toggle enlarging on/off\n"
-		   " i          : Toggle respecting the image aspect on/off\n"
-		   " n          : Rotate the image 90 degrees left\n"
-		   " m          : Rotate the image 90 degrees right\n"
-		   " p          : Disable all transformations\n"
 		   " Copyright (C) 2000 - 2004 Mateusz Golicz, Tomasz Sterna.\n"
-		   " Copyright (C) 2013 yanlin, godspeed1989@gitbub\n", name);
+		   " Copyright (C) 2013 yanlin, godspeed1989@gitbub\n"
+		   " Copyright (C) 2019 Anton Leontiev\n", name);
 }
 
 void sighandler(int s)
