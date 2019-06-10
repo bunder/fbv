@@ -18,7 +18,6 @@
 static int opt_clear = 1;
 static int opt_alpha = 0;
 static int opt_hide_cursor = 1;
-static int opt_image_info = 1;
 static int opt_stretch = 0;
 static int opt_delay = 0;
 static int opt_enlarge = 0;
@@ -275,8 +274,6 @@ identified:
 		printf("\033[H\033[J");
 		fflush(stdout);
 	}
-	if(opt_image_info)
-		printf("fbv - The Framebuffer Viewer\n%s\n%d x %d\n", filename, x_size, y_size);
 
 	if(i.width < screen_width)
 		x_offs = (screen_width - i.width) / 2;
@@ -318,7 +315,6 @@ void help(char *name)
 		   "  -a, --alpha         Use the alpha channel (if applicable)\n"
 		   "  -c, --dontclear     Do not clear the screen before and after displaying the image\n"
 		   "  -u, --donthide      Do not hide the cursor before and after displaying the image\n"
-		   "  -i, --noinfo        Supress image information\n"
 		   "  -f, --stretch       Strech (using a simple resizing routine) the image to fit onto screen if necessary\n"
 		   "  -k, --colorstretch  Strech (using a 'color average' resizing routine) the image to fit onto screen if necessary\n"
 		   "  -e, --enlarge       Enlarge the image to fit the whole screen if necessary\n"
@@ -348,7 +344,6 @@ int main(int argc, char **argv)
 		{"noclear",       no_argument,  0, 'c'},
 		{"alpha",         no_argument,  0, 'a'},
 		{"unhide",        no_argument,  0, 'u'},
-		{"noinfo",        no_argument,  0, 'i'},
 		{"stretch",       no_argument,  0, 'f'},
 		{"colorstrech",   no_argument,  0, 'k'},
 		{"delay",         required_argument, 0, 's'},
@@ -365,7 +360,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	while((c = getopt_long_only(argc, argv, "hcauifks:er", long_options, NULL)) != EOF)
+	while((c = getopt_long_only(argc, argv, "hcaufks:er", long_options, NULL)) != EOF)
 	{
 		switch(c)
 		{
@@ -384,9 +379,6 @@ int main(int argc, char **argv)
 			case 'h':
 				help(argv[0]);
 				return(0);
-			case 'i':
-				opt_image_info = 0;
-				break;
 			case 'f':
 				opt_stretch = 1;
 				break;
