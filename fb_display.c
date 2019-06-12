@@ -222,6 +222,9 @@ void blit2FB(int fh, unsigned char *fbbuff, unsigned char *alpha,
 		return;
 	}
 
+	// Clear framebuffer
+	memset(fb, 0, scr_xs * scr_ys * cpp);
+
 	if(cpp == 1)
 	{
 		get8map(fh, &map_back);
