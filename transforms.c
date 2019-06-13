@@ -7,9 +7,10 @@ unsigned char * simple_resize(unsigned char * orgin,
 {
 	unsigned char *cr, *p, *l;
 	int i, j, k, ip;
-	assert(cr = (unsigned char*)malloc(dx*dy*3));
+	cr = (unsigned char*)malloc(dx*dy*3);
+	assert(cr);
 	l = cr;
-	
+
 	for(j=0; j<dy; j++, l+=dx*3)
 	{
 		p = orgin + (j * oy/dy * ox * 3);
@@ -28,9 +29,10 @@ unsigned char * alpha_resize(unsigned char * alpha, int ox, int oy, int dx, int 
 {
 	unsigned char *cr,*p,*l;
 	int i,j,k;
-	assert(cr = (unsigned char*)malloc(dx*dy));
+	cr = (unsigned char*)malloc(dx*dy);
+	assert(cr);
 	l = cr;
-	
+
 	for(j=0; j<dy; j++,l+=dx)
 	{
 		p = alpha + (j * oy/dy * ox);
@@ -45,8 +47,10 @@ unsigned char * color_average_resize(unsigned char * orgin, int ox, int oy, int 
 	unsigned char *cr,*p,*q;
 	int i,j,k,l,xa,xb,ya,yb;
 	int sq,r,g,b;
-	assert(cr=(unsigned char*) malloc(dx*dy*3)); p=cr;
-	
+	cr = (unsigned char *)malloc(dx*dy*3);
+	assert(cr);
+	p = cr;
+
 	for(j=0;j<dy;j++)
 	{
 		for(i=0;i<dx;i++,p+=3)
@@ -73,8 +77,9 @@ unsigned char * rotate(unsigned char *i, int ox, int oy, int rot)
 {
 	unsigned char * n, * p;
 	int x, y;
-	assert(n = (unsigned char*) malloc(ox * oy * 3));
-	
+	n = (unsigned char *)malloc(ox * oy * 3);
+	assert(n);
+
 	switch(rot)
 	{
 		case 1: /* 90 deg right */
@@ -123,8 +128,9 @@ unsigned char * alpha_rotate(unsigned char *i, int ox, int oy, int rot)
 {
 	unsigned char * n, * p;
 	int x, y;
-	assert(n = (unsigned char*) malloc(ox * oy));
-	
+	n = (unsigned char *)malloc(ox * oy);
+	assert(n);
+
 	switch(rot)
 	{
 		case 1: /* 90 deg right */
