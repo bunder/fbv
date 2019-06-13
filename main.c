@@ -1,9 +1,12 @@
 #include "config.h"
 #include "fbv.h"
 
+#include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include <sys/time.h>
 #include <sys/types.h>
@@ -15,7 +18,7 @@
 
 #define PAN_STEPPING 20
 
-static int opt_alpha = 0;
+static float opt_alpha = 0.f;
 static int opt_stretch = 0;
 static int opt_delay = 0;
 static int opt_enlarge = 0;
@@ -133,6 +136,17 @@ static inline void do_fit_to_screen(struct image *i, int screen_width, int scree
 	}
 }
 
+static inline void fsleep(float delay)
+{
+	float integral;
+	float fractional = modff(delay, &integral);
+	struct timespec ts = {
+		.tv_sec = integral,
+		.tv_nsec = fractional * 1e9
+	};
+
+	nanosleep(&ts, NULL);
+}
 
 int show_image(char *filename)
 {
@@ -144,7 +158,7 @@ int show_image(char *filename)
 	int ret = 1;
 	int x_size, y_size, screen_width, screen_height;
 	int x_pan, y_pan, x_offs, y_offs;
-	int delay = opt_delay;
+	float delay = opt_delay;
 
 	int transform_stretch = opt_stretch, transform_enlarge = opt_enlarge;
 	int transform_cal = (opt_stretch == 2);
@@ -239,7 +253,10 @@ identified:
 	if(fb_display(i.rgb, i.alpha, i.width, i.height, x_pan, y_pan, x_offs, y_offs))
 		goto error;
 
-	sleep(delay);
+	if (delay)
+		fsleep(delay);
+	else
+		while (true) pause();
 
 error:
 	free(image);
@@ -261,7 +278,7 @@ void help(char *name)
 		   "  -f, --stretch       Strech (using a simple resizing routine) the image to fit onto screen if necessary\n"
 		   "  -k, --colorstretch  Strech (using a 'color average' resizing routine) the image to fit onto screen if necessary\n"
 		   "  -e, --enlarge       Enlarge the image to fit the whole screen if necessary\n"
-		   "  -s <delay>, --delay <d>  Slideshow, 'delay' is the slideshow delay in tenths of seconds.\n\n"
+		   "  -s <delay>, --delay <d>  Display each image specified number of seconds. If not specified, display forever.\n\n"
 		   " Copyright (C) 2000 - 2004 Mateusz Golicz, Tomasz Sterna.\n"
 		   " Copyright (C) 2013 yanlin, godspeed1989@gitbub\n"
 		   " Copyright (C) 2019 Anton Leontiev\n", name);
@@ -301,7 +318,7 @@ int main(int argc, char **argv)
 				opt_alpha = 1;
 				break;
 			case 's':
-				opt_delay = atoi(optarg);
+				opt_delay = atof(optarg);
 				break;
 			case 'h':
 				help(argv[0]);
